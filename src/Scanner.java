@@ -111,6 +111,7 @@ public final class Scanner {
 
   private final HBaseClient client;
   private final byte[] table;
+  private int bytesRead;
 
   /**
    * The key to start scanning from.  An empty array means "start from the
@@ -208,6 +209,10 @@ public final class Scanner {
    */
   public byte[] getCurrentKey() {
     return start_key;
+  }
+
+  public int getBytesRead() {
+    return bytesRead;
   }
 
   /**
@@ -1396,7 +1401,10 @@ public final class Scanner {
 
     @Override
     Response deserialize(final ChannelBuffer buf, final int cell_size) {
+      int beginIndex = buf.readerIndex();
       final ScanResponse resp = readProtobuf(buf, ScanResponse.PARSER);
+      bytesRead += buf.readerIndex() - beginIndex;
+
       final long id = resp.getScannerId();
       if (scanner_id != id) {
         throw new InvalidResponseException("Scan RPC response was for scanner"

@@ -2,3 +2,7 @@ build/
 pom.xml
 target/
 /bin/
+.idea/
+src-main/
+*.iml
+src/generated
