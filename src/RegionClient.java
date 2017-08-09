@@ -977,7 +977,10 @@ final class RegionClient extends ReplayingDecoder<VoidEnum> {
    */
   void sendRpc(HBaseRpc rpc) {
     if (chan != null) {
-      if (rpc instanceof BatchableRpc
+      // Now {@link GetRequest} is also a {@link BatchableRpc}, we don't want to retry 
+      // the get request once it fails.
+      if (rpc instanceof BatchableRpc 
+          && !(rpc instanceof GetRequest)
           && (server_version >= SERVER_VERSION_092_OR_ABOVE  // Before 0.92,
               || rpc instanceof PutRequest)) {  // we could only batch "put".
         final BatchableRpc edit = (BatchableRpc) rpc;
@@ -2023,12 +2026,13 @@ final class RegionClient extends ReplayingDecoder<VoidEnum> {
       .append("(chan=")                   // = 6
       .append(chan)                       // ~64 (up to 66 when using IPv4)
       .append(", #pending_rpcs=");        // =16
-    int npending_rpcs;
-    int nedits;
-    synchronized (this) {
-      npending_rpcs = pending_rpcs == null ? 0 : pending_rpcs.size();
-      nedits = batched_rpcs == null ? 0 : batched_rpcs.size();
-    }
+    
+    // avoid synchronization
+    ArrayList<HBaseRpc> pending_rpcs = this.pending_rpcs;
+    MultiAction batched_rpcs = this.batched_rpcs;
+    int npending_rpcs = pending_rpcs == null ? 0 : pending_rpcs.size();
+    int nedits = batched_rpcs == null ? 0 : batched_rpcs.size();
+    
     buf.append(npending_rpcs)             // = 1
       .append(", #batched=")              // = 9
       .append(nedits);                    // ~ 2

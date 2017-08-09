@@ -496,11 +496,11 @@ public abstract class HBaseRpc {
    */
   private boolean suspended_probe = false;
 
-  boolean isSuspendedProbe() {
+  synchronized boolean isSuspendedProbe() {
     return suspended_probe;
   }
 
-  void setSuspendedProbe(boolean suspended_probe) {
+  synchronized void setSuspendedProbe(boolean suspended_probe) {
     this.suspended_probe = suspended_probe;
   }
 
@@ -528,7 +528,7 @@ public abstract class HBaseRpc {
    * A timeout, in milliseconds, to set for this RPC. If the RPC cannot be 
    * sent and processed by HBase within this period then a 
    * {@link RpcTimedOutException} will be returned in the deferred.
-   * <b>
+   * <p>
    * If no timeout is set, then "hbase.rpc.timeout" will be used by default.
    * However if a value of "0" is supplied as the timeout, then the RPC will
    * not be timed out.
